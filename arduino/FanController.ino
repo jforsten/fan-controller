@@ -8,7 +8,6 @@
 // Temp & humidity
 #include "Wire.h"
 #include "SHT2x.h"
-
 SHT2x sht;
 
 // Fan
@@ -27,61 +26,58 @@ SHT2x sht;
 // PWM pin (4th on 4 pin fans)
 #define PWM_PIN 9
 
-// Initialize library
 FanController fan(SENSOR_PIN, SENSOR_THRESHOLD, PWM_PIN);
 
-/*
-   The setup function. We only start the library here
-*/
+unsigned int rpms;
+
 void setup()
 {
-  // start serial port
   Serial.begin(921600);
 
-  sht.begin();  
+  sht.begin();
+  sht.read();  
+  
   fan.begin();
-
   // Set fan duty cycle
   byte value = EEPROM.read(0);
   fan.setDutyCycle(value);  
 }
 
-/*
-   Main function, get and show the temperature
-*/
 void loop()
 {
   sht.read();
   
-  // Get new speed from Serial (0-100%)
+  rpms = fan.getSpeed();
+    
+  // Update the PWM value from Serial input
+  
   if (Serial.available() > 0) {
     byte peekValue = Serial.peek();
     if ( peekValue < 0x30 || peekValue > 0x39 ) {
- 
       Serial.parseInt();
-      getStatus();
- 
     } else {
-       
       int input = Serial.parseInt();
       byte target = max(min(input, 100), 0);
       fan.setDutyCycle(target);
       EEPROM.put(0, target);
-    
     }
   }
-  delay(200);
+  delay(1000);
+  getStatus();
 }
 
 void getStatus() {
-  // Call fan.getSpeed() to get fan RPM.
-  unsigned int rpms = fan.getSpeed(); // Send the command to get RPM
+
   byte dutyCycle = fan.getDutyCycle();
+   
+  // Create JSON response
+  Serial.print("{\"rpm\": ");
   Serial.print(rpms);
-  Serial.print(",");
+  Serial.print(", \"pwm\": ");
   Serial.print(dutyCycle);
-  Serial.print(",");
+  Serial.print(", \"temperature\": ");
   Serial.print(sht.getTemperature(), 1);
-  Serial.print(",");
-  Serial.println(sht.getHumidity(), 1);
+  Serial.print(",  \"humidity\": ");
+  Serial.print(sht.getHumidity(), 1);
+  Serial.println("}");
 }

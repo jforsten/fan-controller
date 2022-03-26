@@ -1,3 +1,5 @@
+// Serial port access //////////////////////////////////////////////////////////////////////////
+
 const { SerialPort } = require('serialport')
 const { ReadlineParser } = require('@serialport/parser-readline')
 
@@ -6,50 +8,61 @@ const serial = new SerialPort({
   baudRate: 921600,
 })
 
-var status = "none"
+serial.on('close', function () {
+  serialOpen()
+})
+
+var status = "-"
 
 const parser = serial.pipe(new ReadlineParser({ delimiter: '\r\n' }))
+
 parser.on('data', data => {
-  console.log(data)
   status = data
 })
 
+function serialOpen() {
+  serial.open(function (err) {
+      if (!err)
+         return
 
-const express = require('express')
-const app = express();
-const port = 3000;
+      console.log('Port is not open: ' + err.message);
+      setTimeout(serialOpen, 1000) // next attempt to open after 1s
+  })
+}
 
-app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-  res.header("Access-Control-Allow-Headers", "x-access-token, Origin, X-Requested-With, Content-Type, Accept");
-  next();
-});
-
-app.get('/', (req, res) => {
-  res.send(status)
-  console.log("served")
-
-  var pwm = req.query.pwm
-  console.log("pwm:" + pwm)
-
-  if (pwm != undefined) {
-    serial.write(pwm, function(err) {
-      if (err) {
-        return console.log('Error on write: ', err.message)
-      }
-      console.log('pwm=' + pwm)
-    })
-  }
-
-  serial.write('R', function(err) {
+function serialWrite(data) {
+  serial.write(data, function(err) {
     if (err) {
       return console.log('Error on write: ', err.message)
     }
-    console.log('message written')
   })
-});
+}
+
+// Server ////////////////////////////////////////////////////////////////////////////////////////////
+
+const express = require('express')
+const app = express()
+const port = 3000
+
+// Allow access from script in client side
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*")
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE')
+  res.header("Access-Control-Allow-Headers", "x-access-token, Origin, X-Requested-With, Content-Type, Accept")
+  next()
+})
+
+app.get('/', (req, res) => {
+  res.send(status)
+ 
+  // Set PWM if received as a query parameter
+  var pwm = req.query.pwm 
+  if (pwm != undefined) {
+    serialWrite(pwm)
+  }
+
+})
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}!`)
-});
+  console.log(`Fan control server listening on port ${port}!`)
+})

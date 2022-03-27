@@ -62,6 +62,7 @@ app.use(function(req, res, next) {
 })
 
 
+// Use /control path for fan status / pwm control access
 app.get('/control', (req, res) => {
   res.send(status)
  
@@ -73,6 +74,7 @@ app.get('/control', (req, res) => {
 
 })
 
+// Use root path to serve the client app
 app.use('/', express.static('../client/dist'))
 
 app.listen(port, () => {

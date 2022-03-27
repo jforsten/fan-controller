@@ -1,6 +1,7 @@
 .DS_Store
 node_modules
-/dist
+# Provide dist/ from repo for easy deployment
+#/dist
 
 
 # local env files

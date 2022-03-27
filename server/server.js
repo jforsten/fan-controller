@@ -1,10 +1,17 @@
-// Serial port access //////////////////////////////////////////////////////////////////////////
+// Config /////////////////////////////////////////////////////////////////////////////////////////
+
+const config = require('config');
+const serverPortNumber = config.get('server.port');
+const serialPortName = config.get('serial.port');
+
+
+// Serial port access /////////////////////////////////////////////////////////////////////////////
 
 const { SerialPort } = require('serialport')
 const { ReadlineParser } = require('@serialport/parser-readline')
 
 const serial = new SerialPort({
-  path: 'COM13',
+  path: serialPortName,
   baudRate: 921600,
 })
 
@@ -22,11 +29,13 @@ parser.on('data', data => {
 
 function serialOpen() {
   serial.open(function (err) {
-      if (!err)
-         return
+      if (!err) {
+        console.log(`Serial port ${serialPortName} is now again ready!`)
+        return 
+      }
 
-      console.log('Port is not open: ' + err.message);
-      setTimeout(serialOpen, 1000) // next attempt to open after 1s
+      console.log(`Serial port ${serialPortName} is not open: ` + err.message);
+      setTimeout(serialOpen, 10000) // next attempt to open after 10s
   })
 }
 
@@ -38,13 +47,13 @@ function serialWrite(data) {
   })
 }
 
-// Server ////////////////////////////////////////////////////////////////////////////////////////////
+// Server /////////////////////////////////////////////////////////////////////////////////////////
 
 const express = require('express')
 const app = express()
-const port = 3000
+const port = serverPortNumber
 
-// Allow access from script in client side
+// Allow access from script in client side when developing web app 
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*")
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE')
@@ -52,7 +61,8 @@ app.use(function(req, res, next) {
   next()
 })
 
-app.get('/', (req, res) => {
+
+app.get('/control', (req, res) => {
   res.send(status)
  
   // Set PWM if received as a query parameter
@@ -63,6 +73,8 @@ app.get('/', (req, res) => {
 
 })
 
+app.use('/', express.static('../client/dist'))
+
 app.listen(port, () => {
-  console.log(`Fan control server listening on port ${port}!`)
+  console.log(`Fan control server is reading ${serialPortName} and listening on port ${port}!`)
 })

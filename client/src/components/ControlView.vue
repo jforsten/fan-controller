@@ -84,7 +84,7 @@ export default {
 
         clearTimeout(this.pwmTimeoutId)
         this.pwmTimeoutId = setTimeout(() => {
-          axios.get('http://localhost:3000/control?pwm=' + this.pwmInternal)
+          axios.get('http://' + location.hostname + ':3000/control?pwm=' + this.pwmInternal)
         }, 500)
       },
     },
@@ -98,7 +98,7 @@ export default {
       }
 
       axios
-        .get('http://localhost:3000/control')
+        .get('http://' + location.hostname + ':3000/control')
         .then((response) => {
           this.stat = response.data
           if (this.pwmNotReady && this.stat.pwm != undefined) {
@@ -111,6 +111,7 @@ export default {
     },
   },
   mounted() {
+    console.log(location.host)
     setInterval(this.getData, 1000)
   },
 }

@@ -1,4 +1,6 @@
-//FanController
+// FanController
+//
+// (c) Juha Forsten 2022
 //
 // Uses CJMCU Beetle board (Leonardo)
 
@@ -13,10 +15,8 @@ SHT2x sht;
 // Fan
 #include <FanController.h>
 
-// Sensor wire is plugged into port 2 on the Arduino.
-// For a list of available pins on your board,
-// please refer to: https://www.arduino.cc/en/Reference/AttachInterrupt
-#define SENSOR_PIN 1
+// Use "TX" (D1) pin in the board (CJMCU Beetle)
+#define SENSOR_PIN 1 
 
 // Choose a threshold in milliseconds between readings.
 // A smaller value will give more updated results,
@@ -24,7 +24,8 @@ SHT2x sht;
 #define SENSOR_THRESHOLD 1000
 
 // PWM pin (4th on 4 pin fans)
-#define PWM_PIN 9
+// D11 pin in the board (CJMCU Beetle)
+#define PWM_PIN 11 
 
 FanController fan(SENSOR_PIN, SENSOR_THRESHOLD, PWM_PIN);
 
